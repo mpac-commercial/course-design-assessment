@@ -1,4 +1,4 @@
-from app.course_service import CourseService
+from app.services.course_service import CourseService
 
 class CourseServiceImpl(CourseService):
   """

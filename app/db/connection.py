@@ -5,10 +5,6 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 
-class Base(DeclarativeBase):
-    pass
-
-
 parser = configparser.ConfigParser()
 parser.read('alembic.ini')
 SQL_URL = parser['alembic']['sqlalchemy.url']
@@ -17,8 +13,8 @@ engine = create_engine(SQL_URL)
 
 LocalSession = sessionmaker(bind=engine)
 
-# Base.metadata.create_all(bind=engine)
 # Base = declarative_base()
+# Base.metadata.create_all(bind=engine)
 
 
 def get_db():
