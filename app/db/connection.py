@@ -1,7 +1,7 @@
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import configparser
-from sqlalchemy.orm import DeclarativeBase
+
 
 
 
@@ -12,9 +12,6 @@ SQL_URL = parser['alembic']['sqlalchemy.url']
 engine = create_engine(SQL_URL)
 
 LocalSession = sessionmaker(bind=engine)
-
-# Base = declarative_base()
-# Base.metadata.create_all(bind=engine)
 
 
 def get_db():

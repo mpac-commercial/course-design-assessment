@@ -1,13 +1,13 @@
 from sqlalchemy import Column, ForeignKey, Integer
-from app.db.connection import Base
+from app.models import Base
 
 
 
 
 class StudentCourse(Base):
-    __tablename__ = 'Student_Course'
+    __tablename__ = 'student_course'
 
     student_course_id = Column('id', Integer, primary_key=True, autoincrement=True)
-    course_id = Column('course_id', ForeignKey('Course.id'))
-    student_id = Column('student_id', ForeignKey('Student.id'))
+    course_id = Column('course_id', ForeignKey('course.id'))
+    student_id = Column('student_id', ForeignKey('student.id'))
 
