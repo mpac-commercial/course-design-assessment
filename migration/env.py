@@ -2,12 +2,12 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from app.db.connection import Base
-from app.models.course import Course
-from app.models.student import Student
-from app.models.assignment import Assignment
 
 from alembic import context
+from app.db.connection import Base
+from app.models.assignment import Assignment
+from app.models.course import Course
+from app.models.student import Student
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

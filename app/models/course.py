@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String
 class Course(Base):
     __tablename__ = 'Course'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column('id', type_=Integer, primary_key=True, autoincrement=True)
     course_name = Column(String(100), nullable=False)
 
 
