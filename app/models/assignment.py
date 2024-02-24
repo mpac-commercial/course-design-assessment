@@ -9,4 +9,4 @@ class Assignment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     course_id = Column(Integer, ForeignKey(Course.id), nullable=False)
-    name = Column(String, nullable=False)
+    name = Column(String(100), nullable=False)

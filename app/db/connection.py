@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 import configparser
 
 
+
 Base = declarative_base()
 
 parser = configparser.ConfigParser()
@@ -13,7 +14,8 @@ engine = create_engine(SQL_URL)
 
 LocalSession = sessionmaker(bind=engine)
 
-Base.metadata.create_all()
+# Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     session = LocalSession()
