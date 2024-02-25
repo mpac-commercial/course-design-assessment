@@ -8,7 +8,7 @@ class Course(Base):
     __tablename__ = 'course'
 
     course_id = Column(name='id', type_=Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
+    course_name = Column(String(100), nullable=False)
 
 
     # def save(db: Session)
