@@ -21,7 +21,13 @@ class CourseServiceImpl(CourseService):
   
 
   def create_course(self, course_name):
-    return super().create_course(course_name)
+    with LocalSession() as session:
+      db_course = models.course.Course(name=course_name)
+      session.add(db_course)
+      session.commit()
+      session.refresh(db_course)
+    return db_course  
+  
   
   def delete_course(self, course_id):
     return super().delete_course(course_id)

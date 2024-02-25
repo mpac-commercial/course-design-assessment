@@ -1,6 +1,6 @@
 from app.services.course_service_impl import CourseServiceImpl
 from fastapi import FastAPI
-from app.schemas.course import Course as CourseSchema, CourseCreate as CourseCreateSchema
+from app.schemas.course import Course as CourseSchema, CourseCreate 
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.db.connection import get_db
@@ -28,6 +28,13 @@ if __name__ == "__main__":
     print(db_course)
     return db_course
   
-  uvicorn.run(app, host='127.0.0.1', port='8000')
+
+  @app.post(path="/course/create/", response_model=CourseCreate)
+  def create_course(course: CourseCreate):
+    print(course)
+    db_course = course_service.create_course(course.name)
+    return db_course
+  
+  uvicorn.run(app, host='127.0.0.1', port=8080)
 
   
