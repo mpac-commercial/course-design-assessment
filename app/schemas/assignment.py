@@ -5,7 +5,7 @@ from .course import CourseView
 
 class AssignmentBase(BaseModel):
     course_id: int
-    name: str
+    assignment_name: str
 
 
 
@@ -14,7 +14,7 @@ class AssignmentCreate(AssignmentBase):
 
 
 
-class AssignmentView:
+class AssignmentView(BaseModel):
     assignment_id: int
     course_instance: CourseView
-    name: str
+    assignment_name: str

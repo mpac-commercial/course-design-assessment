@@ -3,16 +3,15 @@ from pydantic import BaseModel
 
 
 class CourseBase(BaseModel):
-    name: str
+    course_name: str
 
 
 class CourseCreate(CourseBase):
     pass
 
 
-class Course(CourseBase):
+class CourseView(CourseBase):
     course_id: int
-    name: str
 
 
     class Config:
