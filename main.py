@@ -35,6 +35,14 @@ if __name__ == "__main__":
     db_course = course_service.create_course(course.name)
     return db_course
   
+
+  @app.delete(path="/course/delete/{course_id}", response_model=CourseSchema)
+  def delete_course_by_id(course_id: int):
+    course_db = course_service.delete_course(course_id=course_id)
+    return course_db
+
+
+
   uvicorn.run(app, host='127.0.0.1', port=8080)
 
   

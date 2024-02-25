@@ -30,7 +30,11 @@ class CourseServiceImpl(CourseService):
   
   
   def delete_course(self, course_id):
-    return super().delete_course(course_id)
+    with LocalSession() as session:
+      db_course = session.get(models.course.Course, course_id)
+      session.delete(db_course)
+      session.commit()
+    return db_course
   
   def create_assignment(self, course_id, assignment_name):
     return super().create_assignment(course_id, assignment_name)
