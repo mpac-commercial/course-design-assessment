@@ -13,9 +13,13 @@ class CourseServiceImpl(CourseService):
       db_course = session.get(models.course.Course, course_id)
     return db_course
   
+
   def get_courses(self):
-    return super().get_courses()
+    with LocalSession() as session:
+      db_courses = session.query(models.course.Course).all()
+    return db_courses
   
+
   def create_course(self, course_name):
     return super().create_course(course_name)
   
