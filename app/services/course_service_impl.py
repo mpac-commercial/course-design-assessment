@@ -2,7 +2,9 @@ from typing import List
 from app.services.course_service import CourseService
 from app.db.connection import get_db, LocalSession
 from app.models.course import Course
+from app.models.student import Student
 from app.models.assignment import Assignment
+from app.models.student_course import StudentCourse
 
 
 class CourseServiceImpl(CourseService):
@@ -47,12 +49,34 @@ class CourseServiceImpl(CourseService):
       return db_assignemnt
 
   
-  def enroll_student(self, course_id, student_id):
-    return super().enroll_student(course_id, student_id)
-  
+  def get_student_by_id(self, student_id) -> Student:
+    with LocalSession() as session:
+      db_student = session.get(Student, ident=student_id)
+    return db_student
+
+
+  def enroll_student(self, course_id, student_id) -> StudentCourse:
+    with LocalSession() as session:
+      db_student_course = StudentCourse(student_id=student_id, course_id=course_id)
+      session.add(db_student_course)
+      session.commit()
+      session.refresh(db_student_course)
+    return db_student_course
+
+
   def dropout_student(self, course_id, student_id):
-    return super().dropout_student(course_id, student_id)
-  
+    with LocalSession() as session:
+      db_student_course = session.query(StudentCourse).where(
+        StudentCourse.course_id==course_id,
+        StudentCourse.student_id==student_id
+      ).order_by(StudentCourse.student_course_id.desc()).first()
+      
+      session.delete(db_student_course)
+      session.commit()
+
+    return db_student_course
+
+
   def submit_assignment(self, course_id, student_id, assignment_id, grade: int):
     return super().submit_assignment(course_id, student_id, assignment_id, grade)
   
