@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.connection import get_db
 from app.models import course as course_model
 import uvicorn
+from typing import List
 
 
 
@@ -14,6 +15,12 @@ if __name__ == "__main__":
 
   app = FastAPI()
   
+
+  @app.get('/course/', response_model=List[CourseSchema])
+  def get_all_courses():
+    return course_service.get_courses()
+
+
   @app.get(path='/course/{course_id}', response_model=CourseSchema)
   def get_course(course_id: int):
     print('input: ',course_id)
