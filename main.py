@@ -1,6 +1,7 @@
 from app.services.course_service_impl import CourseServiceImpl
 from fastapi import FastAPI
-from app.schemas.course import Course as CourseSchema, CourseCreate 
+from app.schemas.course import CourseView, CourseCreate 
+from app.schemas.assignment import AssignmentCreate, AssignmentView
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.db.connection import get_db
@@ -16,12 +17,12 @@ if __name__ == "__main__":
   app = FastAPI()
   
 
-  @app.get('/course/', response_model=List[CourseSchema])
+  @app.get('/course/', response_model=List[CourseView])
   def get_all_courses():
     return course_service.get_courses()
 
 
-  @app.get(path='/course/{course_id}', response_model=CourseSchema)
+  @app.get(path='/course/{course_id}', response_model=CourseView)
   def get_course(course_id: int):
     print('input: ',course_id)
     db_course = course_service.get_course_by_id(course_id)
@@ -32,16 +33,33 @@ if __name__ == "__main__":
   @app.post(path="/course/create/", response_model=CourseCreate)
   def create_course(course: CourseCreate):
     print(course)
-    db_course = course_service.create_course(course.name)
+    db_course = course_service.create_course(course.course_name)
     return db_course
   
 
-  @app.delete(path="/course/delete/{course_id}", response_model=CourseSchema)
+  @app.delete(path="/course/delete/{course_id}", response_model=CourseView)
   def delete_course_by_id(course_id: int):
-    course_db = course_service.delete_course(course_id=course_id)
-    return course_db
+    db_course = course_service.delete_course(course_id=course_id)
+    return db_course
 
 
+  @app.post(path='/assignment/create/', response_model=AssignmentView)
+  def create_assignment(assignment: AssignmentCreate):
+    db_assignment = course_service.create_assignment(
+      course_id=assignment.course_id,
+      assignment_name=assignment.assignment_name
+    )
+
+    db_course = course_service.get_course_by_id(db_assignment.course_id)
+
+    return AssignmentView(
+      assignment_id=db_assignment.assignment_id,
+      course_instance={'course_id':db_course.course_id, 'course_name': db_course.course_name},
+      assignment_name=db_assignment.assignment_name
+    )
+
+
+    
 
   uvicorn.run(app, host='127.0.0.1', port=8080)
 
