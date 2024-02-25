@@ -11,7 +11,7 @@ class CourseCreate(CourseBase):
 
 
 class Course(CourseBase):
-    id: int
+    course_id: int
     name: str
 
 
