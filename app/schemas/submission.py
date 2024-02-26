@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from app.schemas.course import CourseView
 from app.schemas.student import StudentView
 from app.schemas.assignment import AssignmentView
+from typing import List
 
 
 
@@ -48,3 +49,9 @@ class SubmissionAvgCourseAssignment(BaseModel):
 class CourseAssignment(BaseModel):
     course_id: int
     assignment_id: int
+
+
+
+class SubmissionTopCourseGrades(BaseModel):
+    course_instance: CourseView
+    students: List[int]
