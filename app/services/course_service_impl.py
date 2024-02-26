@@ -5,9 +5,26 @@ from app.models.course import Course
 from app.models.student import Student
 from app.models.assignment import Assignment
 from app.models.student_course import StudentCourse
+from app.models.submission import Submission
+from sqlalchemy import func
 
 
-class CourseServiceImpl(CourseService):
+
+class CourseServiceMixin:
+  def get_student_by_id(self, student_id) -> Student:
+    with LocalSession() as session:
+      db_student = session.get(Student, ident=student_id)
+    return db_student
+    
+
+  def get_assignment_by_id(self, assignment_id: int) -> Assignment:
+    with LocalSession() as session:
+      db_assignment = session.get(Assignment, assignment_id)
+    return db_assignment
+
+
+
+class CourseServiceImpl(CourseService, CourseServiceMixin):
   """
   Please implement the CourseService interface according to the requirements.
   """
@@ -48,12 +65,6 @@ class CourseServiceImpl(CourseService):
       session.refresh(db_assignemnt)
       return db_assignemnt
 
-  
-  def get_student_by_id(self, student_id) -> Student:
-    with LocalSession() as session:
-      db_student = session.get(Student, ident=student_id)
-    return db_student
-
 
   def enroll_student(self, course_id, student_id) -> StudentCourse:
     with LocalSession() as session:
@@ -64,7 +75,7 @@ class CourseServiceImpl(CourseService):
     return db_student_course
 
 
-  def dropout_student(self, course_id, student_id):
+  def dropout_student(self, course_id, student_id) -> StudentCourse:
     with LocalSession() as session:
       db_student_course = session.query(StudentCourse).where(
         StudentCourse.course_id==course_id,
@@ -78,14 +89,29 @@ class CourseServiceImpl(CourseService):
 
 
   def submit_assignment(self, course_id, student_id, assignment_id, grade: int):
-    return super().submit_assignment(course_id, student_id, assignment_id, grade)
+    with LocalSession() as session:
+      db_submission = Submission(
+        course_id=course_id,
+        student_id=student_id,
+        assignment_id=assignment_id,
+        grade=grade
+      )
+      session.add(db_submission)
+      session.commit()
+      session.refresh(db_submission)
+    return db_submission
+
   
   def get_assignment_grade_avg(self, course_id, assignment_id) -> int:
-    return super().get_assignment_grade_avg(course_id, assignment_id)
+    with LocalSession() as session:
+      return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.assignment_id==assignment_id).scalar())
   
-  def get_student_grade_avg(self, course_id, student_id) -> int:
-    return super().get_student_grade_avg(course_id, student_id)
+
+  # def get_student_grade_avg(self, course_id, student_id) -> int:
+  #   with LocalSession() as session:
+  #     return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.student_id==student_id).scalar())
   
+
   def get_top_five_students(self, course_id) -> List[int]:
     return super().get_top_five_students(course_id)
   

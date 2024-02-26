@@ -29,3 +29,22 @@ class SubmissionView(BaseModel):
     class Config:
         from_attributes = True
 
+
+
+class SubmissionAvgCourseStudent(BaseModel):
+    course_instance: CourseView
+    student_instance: StudentView
+    grade: int
+
+
+
+class SubmissionAvgCourseAssignment(BaseModel):
+    course_instance: CourseView
+    assignment_instance: AssignmentView
+    grade: int
+
+
+
+class CourseAssignment(BaseModel):
+    course_id: int
+    assignment_id: int
