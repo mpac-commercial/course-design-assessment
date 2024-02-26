@@ -1,0 +1,31 @@
+from pydantic import BaseModel
+from app.schemas.course import CourseView
+from app.schemas.student import StudentView
+from app.schemas.assignment import AssignmentView
+
+
+
+class SumissionBase(BaseModel):
+    course_id: int
+    student_id: int
+    assignment_id:int
+    grade: int
+
+
+
+class SubmissionCreate(SumissionBase):
+    pass
+
+
+
+class SubmissionView(BaseModel):
+    submission_id: int
+    course_instance: CourseView
+    student_instance: StudentView
+    assignment_instance: AssignmentView
+    grade: int
+
+
+    class Config:
+        from_attributes = True
+
