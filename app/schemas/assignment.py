@@ -18,3 +18,9 @@ class AssignmentView(BaseModel):
     assignment_id: int
     course_instance: CourseView
     assignment_name: str
+
+
+    class Config:
+        from_attributes = True
+
+        

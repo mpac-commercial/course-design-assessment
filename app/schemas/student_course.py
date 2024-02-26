@@ -22,3 +22,7 @@ class StudentCourseView(BaseModel):
     course_instance: CourseView
 
 
+    class Config:
+        from_attributes = True
+
+
