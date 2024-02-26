@@ -161,30 +161,30 @@ if __name__ == "__main__":
     }
   
 
-  # @app.get('/submission/average-course-assignment/', response_model=SubmissionAvgCourseAssignment)
-  # def get_average_course_assignment(request: CourseAssignment):
-  #   db_assignment = course_service.get_assignment_by_id(assignment_id=request.assignment_id)
-  #   if db_assignment is None:
-  #     pass
+  @app.get('/submission/average-course-assignment/', response_model=SubmissionAvgCourseAssignment)
+  def get_average_course_assignment(request: CourseAssignment):
+    db_assignment = course_service.get_assignment_by_id(assignment_id=request.assignment_id)
+    if db_assignment is None:
+      pass
 
-  #   if db_assignment.course_id != request.course_id:
-  #     pass
+    if db_assignment.course_id != request.course_id:
+      pass
 
-  #   db_course = db_course = course_service.get_course_by_id(request.course_id)
-  #   if db_course is None:
-  #     pass
-  #   course_instance = CourseView.model_validate(db_course)
+    db_course = db_course = course_service.get_course_by_id(request.course_id)
+    if db_course is None:
+      pass
+    course_instance = CourseView.model_validate(db_course)
 
-  #   grade = course_service.get_assignment_grade_avg(course_id=request.course_id, assignment_id=request.assignment_id)
-  #   return {
-  #     'course_instance': course_instance,
-  #     'assignment_instance': AssignmentView.model_validate_json(json.dumps({
-  #       'assignment_id': db_assignment.assignment_id,
-  #       'assignment_name': db_assignment.assignment_name,
-  #       'course_instance': course_instance.model_dump()
-  #     })),
-  #     'grade': grade
-  #   }
+    grade = course_service.get_assignment_grade_avg(course_id=request.course_id, assignment_id=request.assignment_id)
+    return {
+      'course_instance': course_instance,
+      'assignment_instance': AssignmentView.model_validate_json(json.dumps({
+        'assignment_id': db_assignment.assignment_id,
+        'assignment_name': db_assignment.assignment_name,
+        'course_instance': course_instance.model_dump()
+      })),
+      'grade': grade
+    }
 
 
   uvicorn.run(app, host='127.0.0.1', port=8080)

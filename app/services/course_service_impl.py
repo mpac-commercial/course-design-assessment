@@ -107,9 +107,9 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
       return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.assignment_id==assignment_id).scalar())
   
 
-  # def get_student_grade_avg(self, course_id, student_id) -> int:
-  #   with LocalSession() as session:
-  #     return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.student_id==student_id).scalar())
+  def get_student_grade_avg(self, course_id, student_id) -> int:
+    with LocalSession() as session:
+      return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.student_id==student_id).scalar())
   
 
   def get_top_five_students(self, course_id) -> List[int]:
