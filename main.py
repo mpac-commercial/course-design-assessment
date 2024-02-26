@@ -4,7 +4,14 @@ from app.schemas.course import CourseView, CourseCreate
 from app.schemas.assignment import AssignmentCreate, AssignmentView
 from app.schemas.student import StudentView
 from app.schemas.student_course import StudentCourseView, StudentCourseCreate
-from app.schemas.submission import SubmissionCreate, SubmissionView, SubmissionAvgCourseAssignment, SubmissionAvgCourseStudent, CourseAssignment
+from app.schemas.submission import (
+  SubmissionCreate,
+  SubmissionView, 
+  SubmissionAvgCourseAssignment, 
+  SubmissionAvgCourseStudent, 
+  CourseAssignment,
+  SubmissionTopCourseGrades
+)
 import uvicorn
 import json
 from typing import List
@@ -185,6 +192,20 @@ if __name__ == "__main__":
       })),
       'grade': grade
     }
+
+
+  @app.get('/submission/{course_id}/top5/', response_model=SubmissionTopCourseGrades)
+  def get_top_course_students(course_id: int):
+    db_course = course_service.get_course_by_id(course_id=course_id)
+    if db_course is None:
+      pass
+    
+    top_students = course_service.get_top_five_students(course_id=course_id)
+    return {
+      'course_instance': CourseView.model_validate(db_course).model_dump(),
+      'students': top_students
+    }  
+
 
 
   uvicorn.run(app, host='127.0.0.1', port=8080)

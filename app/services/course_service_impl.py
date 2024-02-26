@@ -6,7 +6,7 @@ from app.models.student import Student
 from app.models.assignment import Assignment
 from app.models.student_course import StudentCourse
 from app.models.submission import Submission
-from sqlalchemy import func
+from sqlalchemy import func, desc, text
 
 
 
@@ -113,5 +113,14 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
   
 
   def get_top_five_students(self, course_id) -> List[int]:
-    return super().get_top_five_students(course_id)
+    with LocalSession() as session:
+        top_5 = session.query(
+          Submission.student_id,
+          func.avg(Submission.grade).label('average_grade')
+          ).filter_by(course_id=course_id)\
+          .group_by(Submission.student_id)\
+          .order_by(desc('average_grade'))\
+          .limit(5)\
+          .all()
+    return [student_id for student_id, _ in top_5]
   
