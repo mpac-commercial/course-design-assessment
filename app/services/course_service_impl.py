@@ -53,7 +53,7 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
       
       # check for duplicate course name
       if session.query(Course).filter_by(course_name=course_name).first():
-        raise HTTPException(status_code=406, detail={
+        raise HTTPException(status_code=409, detail={
           'description': 'cannot insert duplicate.',
           'message': f'A course with {course_name} name is available and cannot insert duplicate'
         })
@@ -95,7 +95,7 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
       if session.query(Assignment)\
       .filter_by(assignment_name=assignment_name, course_id=course_id)\
       .first():
-        raise HTTPException(status_code=406, detail={
+        raise HTTPException(status_code=409, detail={
           'description': 'cannot create assignment.',
           'message': f'An assignment was found with name {assignment_name} and course ID {course_id}'
         })
@@ -124,11 +124,19 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
       .filter_by(course_id=course_id)\
       .first():
         raise HTTPException(status_code=404, detail={
-          'description': 'cannit enroll student.',
+          'description': 'cannot enroll student.',
           'message': f'course with ID {course_id} was not found!'
         })
 
       db_student_course = StudentCourse(student_id=student_id, course_id=course_id)
+      # check for duplicate student and course enrollment
+      if session.query(StudentCourse)\
+        .filter_by(student_id=student_id, course_id=course_id)\
+        .first():
+        raise HTTPException(status_code=409, detail={
+          'description': 'cannot enroll student.',
+          'message': f'student with ID {student_id} is already enrolled in course with ID {course_id}.'
+        })
       session.add(db_student_course)
       session.commit()
       session.refresh(db_student_course)
