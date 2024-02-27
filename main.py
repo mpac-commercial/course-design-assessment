@@ -109,7 +109,8 @@ if __name__ == "__main__":
 
   @app.delete(path='/student/dropout/', response_model=StudentCourseView)
   def dropout_student(student_course_schema: StudentCourseCreate):
-    db_student = course_service.get_student_by_id(deleted_student_course.student_id)
+    db_student = course_service.get_student_by_id(student_course_schema.student_id)
+    # check if the student with student_id exists
     if db_student is None:
       raise HTTPException(status_code=404, detail={
         'description': 'cannot dropout student.',
@@ -117,7 +118,13 @@ if __name__ == "__main__":
       })
     student_instance = StudentView.model_validate(db_student)
 
-    db_course = course_service.get_course_by_id(deleted_student_course.course_id)
+    db_course = course_service.get_course_by_id(student_course_schema.course_id)
+    # check if course with course_id exists
+    if db_course is None:
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot dropout student.',
+        'message': f'course with ID {student_course_schema.course_id} was not found!'
+      })
     course_instance = CourseView.model_validate(db_course)
 
     deleted_student_course = course_service.dropout_student(
