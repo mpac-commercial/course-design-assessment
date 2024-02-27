@@ -1,5 +1,5 @@
 from app.services.course_service_impl import CourseServiceImpl
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from app.schemas.course import CourseView, CourseCreate 
 from app.schemas.assignment import AssignmentCreate, AssignmentView
 from app.schemas.student import StudentView
@@ -24,20 +24,32 @@ if __name__ == "__main__":
   app = FastAPI()
   
 
-  @app.get('/course/', response_model=List[CourseView])
+  @app.get('/course/all/', response_model=CourseView)
   def get_all_courses():
-    return course_service.get_courses()
-
+    all_courses = course_service.get_courses()
+    if not all_courses:
+      raise HTTPException(status_code=404, detail={
+        'description': 'Item not found.',
+        'detail': 'No courses was found!'
+      })
+    return {
+      'count_course': len(all_courses),
+      'course_list': [CourseView.model_validate(course_instance).model_dump() for course_instance in all_courses]
+    }
 
   @app.get(path='/course/{course_id}', response_model=CourseView)
   def get_course(course_id: int):
     print('input: ',course_id)
     db_course = course_service.get_course_by_id(course_id)
+    # if db_course is None:
+    #   raise HTTPException(status_code=404, detail={
+    #     ''
+    #   })
     print(db_course)
     return db_course
   
 
-  @app.post(path="/course/create/", response_model=CourseCreate)
+  @app.post(path="/course/create/", response_model=CourseView)
   def create_course(course_schema: CourseCreate):
     print(course_schema)
     db_course = course_service.create_course(course_schema.course_name)
@@ -51,14 +63,14 @@ if __name__ == "__main__":
 
 
   @app.post(path='/assignment/create/', response_model=AssignmentView)
-  def create_assignment(assignment_schema: AssignmentCreate):
+  def create_assignment(request: AssignmentCreate):
+    db_course = course_service.get_course_by_id(db_assignment.course_id)
+
     db_assignment = course_service.create_assignment(
-      course_id=assignment_schema.course_id,
-      assignment_name=assignment_schema.assignment_name
+      course_id=request.course_id,
+      assignment_name=request.assignment_name
     )
 
-    db_course = course_service.get_course_by_id(db_assignment.course_id)
-    
     return AssignmentView(
       assignment_id=db_assignment.assignment_id,
       course_instance={'course_id':db_course.course_id, 'course_name': db_course.course_name},
@@ -104,8 +116,11 @@ if __name__ == "__main__":
     db_course = course_service.get_course_by_id(deleted_student_course.course_id)
     course_instance = CourseView.model_validate(db_course)
 
-    return StudentCourseView.model_validate(course_instance)
-
+    return {
+      'student_course_id': deleted_student_course.student_course_id,
+      'student_instance': student_instance.model_dump(),
+      'course_instance': course_instance.model_dump( )
+    }
 
   @app.post(path='/submission/', response_model=SubmissionView)
   def create_submission(submission_schema: SubmissionCreate):
