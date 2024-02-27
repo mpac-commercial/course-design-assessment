@@ -167,6 +167,20 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
 
   def submit_assignment(self, course_id, student_id, assignment_id, grade: int):
     with LocalSession() as session:
+      if not 0 <= grade <= 100:
+        raise HTTPException(status_code=422, detail={
+          'description': 'cannot create submission',
+          'message': f'grade out of range. grade should be between 0 and 100.'
+        })
+
+      if session.query(Submission)\
+      .filter_by(course_id=course_id, assignment_id=assignment_id, student_id=student_id)\
+      .first():
+        raise HTTPException(status_code=409, detail={
+          'description': 'cannot create submission.',
+          'message': f'dupliacate values not allowed! record is available for course with ID {course_id}, assignment with ID {assignment_id}, and student with ID {student_id}.'
+        })
+
       db_submission = Submission(
         course_id=course_id,
         student_id=student_id,

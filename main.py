@@ -140,27 +140,43 @@ if __name__ == "__main__":
     }
 
   @app.post(path='/submission/', response_model=SubmissionView)
-  def create_submission(submission_schema: SubmissionCreate):
-    db_assignment = course_service.get_assignment_by_id(assignment_id=submission_schema.assignment_id)
+  def create_submission(request: SubmissionCreate):
+    db_assignment = course_service.get_assignment_by_id(assignment_id=request.assignment_id)
+    # check if assignment exists
     if db_assignment is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot create submission.',
+        'message': f'could not found assignment with ID {request.assignment_id}'
+      })
 
-    if db_assignment.course_id != submission_schema.course_id:
-      pass
+    # check if request course_id and assignment course_id match
+    if db_assignment.course_id != request.course_id:
+      raise HTTPException(status_code=409, detail={
+        'description': 'cannot create submission.',
+        'message': f"course ID with ID {request.course_id} is not matched with assignment's course ID {db_assignment.course_id}."
+      })
 
-    db_course = course_service.get_course_by_id(course_id=submission_schema.course_id)
+    db_course = course_service.get_course_by_id(course_id=request.course_id)
+    #check if course exists
     if db_course is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot create submission.',
+        'message': f'could not find course with ID {request.course_id}'
+      })
 
-    db_student = course_service.get_student_by_id(student_id=submission_schema.student_id)
+    db_student = course_service.get_student_by_id(student_id=request.student_id)
+    # check if student exitst
     if db_student is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot create submission',
+        'message': f'could not find student with ID {request.student_id}'
+      })
 
     db_submission = course_service.submit_assignment(
-      course_id=submission_schema.course_id,
-      student_id=submission_schema.student_id,
-      assignment_id=submission_schema.assignment_id,
-      grade=submission_schema.grade
+      course_id=request.course_id,
+      student_id=request.student_id,
+      assignment_id=request.assignment_id,
+      grade=request.grade
     )
 
     course_instance = CourseView.model_validate(db_course)
