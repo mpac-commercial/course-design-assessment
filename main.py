@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
   @app.get(path='/course/{course_id}', response_model=CourseView)
   def get_course(course_id: int):
-    print('input: ',course_id)
     db_course = course_service.get_course_by_id(course_id)
+    # Check for existance of course
     if db_course is None:
       raise HTTPException(status_code=404, detail={
         'description': 'Item not found.',
