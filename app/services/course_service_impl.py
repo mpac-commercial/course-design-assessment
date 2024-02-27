@@ -145,11 +145,19 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
 
   def dropout_student(self, course_id, student_id) -> StudentCourse:
     with LocalSession() as session:
+      # fetch enrolled student with student_id and course_id
       db_student_course = session.query(StudentCourse).where(
         StudentCourse.course_id==course_id,
         StudentCourse.student_id==student_id
       ).order_by(StudentCourse.student_course_id.desc()).first()
-      
+
+      # check if the enrolled student exists
+      if not db_student_course:
+        raise HTTPException(status_code=404, detail={
+          'description': 'cannot dropout student.',
+          'message': f'student with ID {student_id} is not enrolled in course with ID {course_id}!'
+        })
+
       session.delete(db_student_course)
       session.commit()
 
