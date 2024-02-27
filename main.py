@@ -127,6 +127,7 @@ if __name__ == "__main__":
       })
     course_instance = CourseView.model_validate(db_course)
 
+    # dropout student
     deleted_student_course = course_service.dropout_student(
       student_id=student_course_schema.student_id,
       course_id=student_course_schema.course_id

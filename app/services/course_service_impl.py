@@ -158,6 +158,7 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
           'message': f'student with ID {student_id} is not enrolled in course with ID {course_id}!'
         })
 
+      # dropout student
       session.delete(db_student_course)
       session.commit()
 
