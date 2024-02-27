@@ -43,7 +43,7 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
 
   def create_course(self, course_name) -> Course:
     with LocalSession() as session:
-      if not 0< len(course_name) < 100:
+      if not 0< len(course_name) <= 100:
         raise HTTPException(status_code=406, detail={
           'description': 'cannot create course.',
           'message': 'course name should have less than 100 characters.'
@@ -80,6 +80,12 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
   
   def create_assignment(self, course_id, assignment_name) -> Assignment:
     with LocalSession() as session:
+      if not 0 < len(assignment_name) <= 100: 
+        raise HTTPException(status_code=406, detail={
+          'description': 'cannot create assignment.',
+          'message': 'assignment name should have between 0 and 100 characters.'
+        })
+
       if (assignment_name, course_id) in session.query(Assignment)\
       .filter_by(assignment_name=assignment_name.lower(), course_id=course_id)\
       .with_entities(Assignment.assignment_name, Assignment.course_id)\
