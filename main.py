@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
   @app.post(path="/course/create/", response_model=CourseView)
   def create_course(course_schema: CourseCreate):
-    print(course_schema)
     db_course = course_service.create_course(course_schema.course_name)
     return db_course
   

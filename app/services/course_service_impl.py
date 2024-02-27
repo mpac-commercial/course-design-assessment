@@ -48,6 +48,15 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
           'description': 'cannot create course.',
           'message': 'course name should have less than 100 characters.'
         })
+      
+      if course_name in {name[0] for name in session.query(Course.course_name)\
+      .distinct(Course.course_name)\
+      .with_entities(Course.course_name)}:
+        raise HTTPException(status_code=406, detail={
+          'description': 'cannot insert duplicate.',
+          'message': f'A course with {course_name} name is available and cannot insert duplicate'
+        })
+
       db_course = Course(course_name=course_name.lower())
       session.add(db_course)
       session.commit()
