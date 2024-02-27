@@ -7,6 +7,7 @@ from app.models.assignment import Assignment
 from app.models.student_course import StudentCourse
 from app.models.submission import Submission
 from sqlalchemy import func, desc, text
+from fastapi.exceptions import HTTPException
 
 
 
@@ -42,7 +43,12 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
 
   def create_course(self, course_name) -> Course:
     with LocalSession() as session:
-      db_course = Course(course_name=course_name)
+      if not 0< len(course_name) < 100:
+        raise HTTPException(status_code=406, detail={
+          'description': 'cannot create course.',
+          'message': 'course name should have less than 100 characters.'
+        })
+      db_course = Course(course_name=course_name.lower())
       session.add(db_course)
       session.commit()
       session.refresh(db_course)
