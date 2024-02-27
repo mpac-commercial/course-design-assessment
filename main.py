@@ -231,17 +231,32 @@ if __name__ == "__main__":
 
   @app.get('/submission/average-course-assignment/', response_model=SubmissionAvgCourseAssignment)
   def get_average_course_assignment(request: CourseAssignment):
-    db_assignment = course_service.get_assignment_by_id(assignment_id=request.assignment_id)
-    if db_assignment is None:
-      pass
-
-    if db_assignment.course_id != request.course_id:
-      pass
-
-    db_course = db_course = course_service.get_course_by_id(request.course_id)
+    # fetch course instance by course_id
+    db_course = course_service.get_course_by_id(request.course_id)
+    # check if course exists
     if db_course is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'request cannot be made.',
+        'message': f'could not find course with ID {request.course_id}'
+      })  
+    # create course schema from database
     course_instance = CourseView.model_validate(db_course)
+    
+    # fetch assignment by assignment_id
+    db_assignment = course_service.get_assignment_by_id(assignment_id=request.assignment_id)
+    # check if assignment exists
+    if db_assignment is None:
+      raise HTTPException(status_code=404, detail={
+        'description': 'request could not be made',
+        'message': f'could not find assignment with ID {request.assignment_id}'
+      })
+
+    # check if user prompted course_id matches the assignemnt course_id
+    if db_assignment.course_id != request.course_id:  
+      raise HTTPException(status_code=409, detail={
+        'description': 'request could not be made',
+        'message': f'course with ID {request.course_id} does not match the assignment\'s course with ID {db_assignment.course_id}'
+      })
 
     grade = course_service.get_assignment_grade_avg(course_id=request.course_id, assignment_id=request.assignment_id)
     return {
