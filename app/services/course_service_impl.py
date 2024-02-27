@@ -80,6 +80,16 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
   
   def create_assignment(self, course_id, assignment_name) -> Assignment:
     with LocalSession() as session:
+      if (assignment_name, course_id) in session.query(Assignment)\
+      .filter_by(assignment_name=assignment_name.lower(), course_id=course_id)\
+      .with_entities(Assignment.assignment_name, Assignment.course_id)\
+      .all():
+        raise HTTPException(status_code=406, detail={
+          'description': 'cannot create assignment.',
+          'message': f'An assignment was found with name {assignment_name} and course ID {course_id}'
+        })
+        
+
       db_assignemnt = Assignment(course_id=course_id, assignment_name=assignment_name)      
       session.add(db_assignemnt)
       session.commit()

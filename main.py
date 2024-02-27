@@ -70,7 +70,6 @@ if __name__ == "__main__":
         'message': f'Course not found with ID {request.course_id}'
       })
 
-
     db_assignment = course_service.create_assignment(
       course_id=request.course_id,
       assignment_name=request.assignment_name
