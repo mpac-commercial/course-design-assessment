@@ -1,6 +1,6 @@
 from app.services.course_service_impl import CourseServiceImpl
 from fastapi import FastAPI, HTTPException
-from app.schemas.course import CourseView, CourseCreate 
+from app.schemas.course import CourseView, CourseCreate, AllCourseView
 from app.schemas.assignment import AssignmentCreate, AssignmentView
 from app.schemas.student import StudentView
 from app.schemas.student_course import StudentCourseView, StudentCourseCreate
@@ -24,13 +24,13 @@ if __name__ == "__main__":
   app = FastAPI()
   
 
-  @app.get('/course/all/', response_model=CourseView)
+  @app.get('/course/all/', response_model=AllCourseView)
   def get_all_courses():
     all_courses = course_service.get_courses()
     if not all_courses:
       raise HTTPException(status_code=404, detail={
         'description': 'Item not found.',
-        'detail': 'No courses was found!'
+        'message': 'No courses was found!'
       })
     return {
       'count_course': len(all_courses),
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     if db_course is None:
       raise HTTPException(status_code=404, detail={
         'description': 'Item not found.',
-        'detail': f'course not found with ID {course_id}'
+        'message': f'course not found with ID {course_id}!'
       })
     return db_course
   
