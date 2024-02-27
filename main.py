@@ -14,7 +14,6 @@ from app.schemas.submission import (
 )
 import uvicorn
 import json
-from typing import List
 
 
 
@@ -39,7 +38,7 @@ if __name__ == "__main__":
       'course_list': [CourseView.model_validate(course_instance).model_dump() for course_instance in all_courses]
     }
 
-  @app.get(path='/course/{course_id}', response_model=CourseView)
+  @app.get(path='/course/{course_id}/', response_model=CourseView)
   def get_course(course_id: int):
     # fetch course frim database
     db_course = course_service.get_course_by_id(course_id)
