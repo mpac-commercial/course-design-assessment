@@ -63,7 +63,13 @@ if __name__ == "__main__":
 
   @app.post(path='/assignment/create/', response_model=AssignmentView)
   def create_assignment(request: AssignmentCreate):
-    db_course = course_service.get_course_by_id(db_assignment.course_id)
+    db_course = course_service.get_course_by_id(request.course_id)
+    if db_course is None:
+      raise HTTPException(status_code=404, detail={
+        'desccription': 'cannot create assignment.',
+        'message': f'Course not found with ID {request.course_id}'
+      })
+
 
     db_assignment = course_service.create_assignment(
       course_id=request.course_id,
