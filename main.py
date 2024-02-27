@@ -173,7 +173,7 @@ if __name__ == "__main__":
         'message': f"course ID with ID {request.course_id} is not matched with assignment's course ID {db_assignment.course_id}."
       })
 
-
+    # add submission to database
     db_submission = course_service.submit_assignment(
       course_id=request.course_id,
       student_id=request.student_id,
@@ -181,6 +181,7 @@ if __name__ == "__main__":
       grade=request.grade
     )
 
+    # create schemas from database
     course_instance = CourseView.model_validate(db_course)
     student_instance = StudentView.model_validate(db_student)
 
