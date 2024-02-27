@@ -41,11 +41,11 @@ if __name__ == "__main__":
   def get_course(course_id: int):
     print('input: ',course_id)
     db_course = course_service.get_course_by_id(course_id)
-    # if db_course is None:
-    #   raise HTTPException(status_code=404, detail={
-    #     ''
-    #   })
-    print(db_course)
+    if db_course is None:
+      raise HTTPException(status_code=404, detail={
+        'description': 'Item not found.',
+        'detail': f'course not found with ID {course_id}'
+      })
     return db_course
   
 

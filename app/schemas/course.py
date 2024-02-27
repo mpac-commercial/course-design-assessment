@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-# from typing import 
+from typing import List
 
 
 class CourseBase(BaseModel):
@@ -16,3 +16,8 @@ class CourseView(CourseBase):
 
     class Config:
         from_attributes = True
+
+
+class AllCourseView(BaseModel):
+    count_course: int
+    course_list: List[CourseView]
