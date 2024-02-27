@@ -198,7 +198,16 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
   
   def get_assignment_grade_avg(self, course_id, assignment_id) -> int:
     with LocalSession() as session:
-      return int(session.query(func.round(func.avg(Submission.grade))).filter(Submission.course_id==course_id, Submission.assignment_id==assignment_id).scalar())
+      result = session.query(func.round(func.avg(Submission.grade)))\
+        .filter(Submission.course_id==course_id, Submission.assignment_id==assignment_id)\
+        .scalar()
+      if not result:
+        raise HTTPException(status_code=404, detail={
+          'description': 'request cannot be made',
+          'message': f'could not find any grade for course with ID {course_id} and assignment with ID {assignment_id}'
+        })
+      return int(result)
+        
   
 
   def get_student_grade_avg(self, course_id, student_id) -> int:

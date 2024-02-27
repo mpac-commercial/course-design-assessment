@@ -201,13 +201,23 @@ if __name__ == "__main__":
   @app.get('/submission/average-course-student/', response_model=SubmissionAvgCourseStudent)
   def get_average_course_student(request: StudentCourseCreate):
     db_course = course_service.get_course_by_id(request.course_id)
+    # check if course exists
     if db_course is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'request cannot be made.',
+        'message': f'no course was found with ID {request.course_id}'
+      })
+    #create course schema from database
     course_instance = CourseView.model_validate(db_course)
 
-    db_student = course_service.get_student_by_id(request.student_id)
+    db_student = course_service.get_student_by_id(request.course_id)
+    # check if student exists
     if db_student is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'request cannot be made.',
+        'message': f'no student was found with ID {request.student_id}'
+      })
+    # create student schema from database
     student_instance = StudentView.model_validate(db_student)
 
     grade = course_service.get_student_grade_avg(course_id=request.course_id, student_id=request.student_id)
