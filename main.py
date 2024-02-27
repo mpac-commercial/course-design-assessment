@@ -26,7 +26,9 @@ if __name__ == "__main__":
 
   @app.get('/course/all/', response_model=AllCourseView)
   def get_all_courses():
+    # fetch course list
     all_courses = course_service.get_courses()
+    # check if any course record exists
     if not all_courses:
       raise HTTPException(status_code=404, detail={
         'description': 'Item not found.',
@@ -39,6 +41,7 @@ if __name__ == "__main__":
 
   @app.get(path='/course/{course_id}', response_model=CourseView)
   def get_course(course_id: int):
+    # fetch course frim database
     db_course = course_service.get_course_by_id(course_id)
     # Check for existance of course
     if db_course is None:
@@ -50,8 +53,8 @@ if __name__ == "__main__":
   
 
   @app.post(path="/course/create/", response_model=CourseView)
-  def create_course(course_schema: CourseCreate):
-    db_course = course_service.create_course(course_schema.course_name)
+  def create_course(request: CourseCreate):
+    db_course = course_service.create_course(request.course_name)
     return db_course
   
 
@@ -63,13 +66,16 @@ if __name__ == "__main__":
 
   @app.post(path='/assignment/create/', response_model=AssignmentView)
   def create_assignment(request: AssignmentCreate):
-    db_course = course_service.get_course_by_id(request.course_id)
+    # fetch course from database
+    db_course = course_service.get_course_by_id(request.course_id)\
+    # check if course exists
     if db_course is None:
       raise HTTPException(status_code=404, detail={
         'desccription': 'cannot create assignment.',
         'message': f'Course not found with ID {request.course_id}'
       })
 
+    # crate assignment schema from database
     db_assignment = course_service.create_assignment(
       course_id=request.course_id,
       assignment_name=request.assignment_name
@@ -83,22 +89,39 @@ if __name__ == "__main__":
   
   
   @app.post(path='/student/enroll/', response_model=StudentCourseView)
-  def enroll_student(student_course_schema: StudentCourseCreate):
-    db_student_course = course_service.enroll_student(
-      course_id=student_course_schema.course_id,
-      student_id=student_course_schema.student_id
-    )
-
-    db_student = course_service.get_student_by_id(student_course_schema.student_id)
+  def enroll_student(request: StudentCourseCreate):
+    # fetch student from database
+    db_student = course_service.get_student_by_id(request.student_id)
+    # check if student exists
+    if db_student is None:
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot enroll student.',
+        'message': f'could not find student with ID {request.student_id}'
+      })
+    # create student schema from database
     student_instance = StudentView(
       student_name=db_student.student_name,
       student_id=db_student.student_id
       )
 
+    # fetch course from database
     db_course = course_service.get_course_by_id(db_student_course.course_id)
+    # check if course exists
+    if db_course is None:
+      raise HTTPException(status_code=404, detail={
+        'description': 'cannot enroll student',
+        'message': f'could not find course with ID {request.course_id}'
+      })
+    # create course schema from database
     course_instance = CourseView(
       course_id=db_course.course_id,
       course_name=db_course.course_name
+    )
+    
+    # create student-course schema from database
+    db_student_course = course_service.enroll_student(
+      course_id=request.course_id,
+      student_id=request.student_id
     )
 
     return StudentCourseView(
@@ -108,29 +131,29 @@ if __name__ == "__main__":
       )
 
   @app.delete(path='/student/dropout/', response_model=StudentCourseView)
-  def dropout_student(student_course_schema: StudentCourseCreate):
-    db_student = course_service.get_student_by_id(student_course_schema.student_id)
+  def dropout_student(request: StudentCourseCreate):
+    db_student = course_service.get_student_by_id(request.student_id)
     # check if the student with student_id exists
     if db_student is None:
       raise HTTPException(status_code=404, detail={
         'description': 'cannot dropout student.',
-        'message': f'student with ID {student_course_schema.student_id} was not found!'
+        'message': f'student with ID {request.student_id} was not found!'
       })
     student_instance = StudentView.model_validate(db_student)
 
-    db_course = course_service.get_course_by_id(student_course_schema.course_id)
+    db_course = course_service.get_course_by_id(request.course_id)
     # check if course with course_id exists
     if db_course is None:
       raise HTTPException(status_code=404, detail={
         'description': 'cannot dropout student.',
-        'message': f'course with ID {student_course_schema.course_id} was not found!'
+        'message': f'course with ID {request.course_id} was not found!'
       })
     course_instance = CourseView.model_validate(db_course)
 
     # dropout student
     deleted_student_course = course_service.dropout_student(
-      student_id=student_course_schema.student_id,
-      course_id=student_course_schema.course_id
+      student_id=request.student_id,
+      course_id=request.course_id
     )
 
     return {

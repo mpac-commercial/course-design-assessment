@@ -12,6 +12,9 @@ from fastapi.exceptions import HTTPException
 
 
 class CourseServiceMixin:
+  """
+  Additional methods for database queries
+  """
   def get_student_by_id(self, student_id) -> Student:
     with LocalSession() as session:
       db_student = session.get(Student, ident=student_id)
