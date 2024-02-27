@@ -66,6 +66,12 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
   
   def delete_course(self, course_id) -> Course:
     with LocalSession() as session:
+      if not self.get_course_by_id(course_id=course_id):
+        raise HTTPException(status_code=404, detail={
+          'description': 'cannot delete course.',
+          'message': f'course couldn\'t be found with ID {course_id}.' 
+        })
+
       db_course = session.get(Course, course_id)
       session.delete(db_course)
       session.commit()
