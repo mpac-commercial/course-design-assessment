@@ -1,12 +1,12 @@
 from typing import List
 from app.services.course_service import CourseService
-from app.db.connection import get_db, LocalSession
+from app.db.connection import LocalSession
 from app.models.course import Course
 from app.models.student import Student
 from app.models.assignment import Assignment
 from app.models.student_course import StudentCourse
 from app.models.submission import Submission
-from sqlalchemy import func, desc, text
+from sqlalchemy import func, desc
 from fastapi.exceptions import HTTPException
 
 

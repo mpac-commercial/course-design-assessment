@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from app.schemas.student import StudentView
 from app.schemas.course import CourseView
-from app.models.student_course import StudentCourse
 
 
 
