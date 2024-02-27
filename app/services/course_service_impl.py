@@ -233,5 +233,13 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
           .order_by(desc('average_grade'))\
           .limit(5)\
           .all()
+    
+    # check if any student grade available
+    if not top_5:
+      raise HTTPException(status_code=404, detail={
+        'description': 'request cannot be made',
+        'message': f'no student grade were found for the course with ID {course_id}'
+      })
+
     return [student_id for student_id, _ in top_5]
   

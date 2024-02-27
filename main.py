@@ -273,8 +273,12 @@ if __name__ == "__main__":
   @app.get('/submission/{course_id}/top5/', response_model=SubmissionTopCourseGrades)
   def get_top_course_students(course_id: int):
     db_course = course_service.get_course_by_id(course_id=course_id)
+    # check if course exists
     if db_course is None:
-      pass
+      raise HTTPException(status_code=404, detail={
+        'description': 'request cannot be made',
+        'message': f'could not find course with ID {course_id}'
+      })
     
     top_students = course_service.get_top_five_students(course_id=course_id)
     return {
