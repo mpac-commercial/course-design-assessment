@@ -198,6 +198,7 @@ class TestAssignment(TestBase):
         payload = {'assignment_name': 'test for create', 'course_id': new_course_obj.course_id}
 
         with LocalSession() as session:
+            self.delete_if_exist(Assignment, assignment_name=payload['assignment_name'], course_id=new_course_obj.course_id)
             new_assignment_obj = Assignment(assignment_name=payload['assignment_name'],
                                              course_id=new_course_obj.course_id)
             session.add(new_assignment_obj)
@@ -222,6 +223,7 @@ class TestAssignment(TestBase):
     def test_create_assignment_course_not_found(self):
         with LocalSession() as session:
             new_course_obj = Course(course_name='assignemnt course to be deleted')
+            self.delete_if_exist(Course, course_name=new_course_obj.course_name)
             session.add(new_course_obj)
             session.commit()
             session.refresh(new_course_obj)
@@ -242,6 +244,70 @@ class TestAssignment(TestBase):
       'message': f'Course not found with ID {new_course_obj.course_id}'
     }
         }
+
+    
+    def test_create_assignment_long_assignment_name(self):
+        with LocalSession() as session:
+            new_course_obj = Course(course_name='course for long assignment name error')
+            self.delete_if_exist(table=Course, course_name=new_course_obj.course_name)
+            session.add(new_course_obj)
+            session.commit()
+            session.refresh(new_course_obj)
+
+
+        payload = {
+            'assignment_name': 'c' * 101,
+            'course_id': new_course_obj.course_id
+        }
+
+        response = self.client.post('/assignment/create', json=payload)
+
+        assert response.status_code == 406
+        assert response.json() == {
+            'detail': {
+          'description': 'cannot create assignment.',
+          'message': 'assignment name should have between 0 and 100 characters.'
+        }
+        }
+
+
+    def test_create_assignment_dupilcate(self):
+        payload = {
+            'assignment_name': 'duplicate assignment',
+            'course_id': None
+        }
+
+        with LocalSession() as session:
+            self.delete_if_exist(table=Assignment, assignment_name=payload['assignment_name'])
+            new_course_obj = Course(course_name='course for duplicate')
+            self.delete_if_exist(table=Course, course_name=new_course_obj.course_name)
+            session.add(new_course_obj)
+            session.commit()
+            session.refresh(new_course_obj)
+    
+        payload['course_id'] = new_course_obj.course_id
+
+        with LocalSession() as session:
+            new_assignment_obj = Assignment(assignment_name=payload['assignment_name'], course_id=new_course_obj.course_id)
+            self.delete_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name=payload['assignment_name'])
+            session.add(new_assignment_obj)
+            session.commit()
+            session.refresh(new_assignment_obj)
+
+        
+        response = self.client.post('/assignment/create', json=payload)
+        print(response.json())
+        
+        assert response.status_code == 409
+        assert response.json() == {
+            'detail': {
+          'description': 'cannot create assignment.',
+          'message': f'An assignment was found with name {new_assignment_obj.assignment_name} and course ID {new_course_obj.course_id}'
+        }
+        }
+
+        
+
 
 
 
