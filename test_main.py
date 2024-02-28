@@ -1560,6 +1560,6 @@ class TestSubmission(TestBase):
         assert response.json() == {
             'detail': {
                 'description': 'request cannot be made',
-                'message': f'no student grade were found for the course with ID {new_course_obj.course_id}'
+                'message': f'no student grade were found for the course with ID {course_id}'
             }
         }
