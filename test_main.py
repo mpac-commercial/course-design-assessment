@@ -1398,3 +1398,42 @@ class TestSubmission(TestBase):
                 'message': f'could not find any grade for course with ID {new_course_obj.course_id} and assignment with ID {new_assignment_obj.assignment_id}'
                 }
         }
+
+
+    def test_average_assignment_conflict(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course average assignment conflict')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course average assignment conflict')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            conflict_course_obj = self.fetch_if_exist(Course, course_name='course average assignment conflict course')
+            if conflict_course_obj is None:
+                conflict_course_obj = Course(course_name='course average assignment conflict course')
+                session.add(conflict_course_obj)
+                session.commit()
+                session.refresh(conflict_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=conflict_course_obj.course_id, assignment_name='assignment average assignment conflict')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=conflict_course_obj.course_id, assignment_name='assignment average assignment conflict')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            payload = {
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id
+            }
+
+        response = self.client.request('GET', '/submission/average-course-assignment', json=payload)
+
+        assert response.status_code == 409
+        assert response.json() == {
+            'detail': {
+                'description': 'request could not be made',
+                'message': f'course with ID {new_course_obj.course_id} does not match the assignment\'s course with ID {new_assignment_obj.course_id}'
+            }
+        }
