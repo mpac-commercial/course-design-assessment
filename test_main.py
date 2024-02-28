@@ -477,3 +477,50 @@ class TestStudent(TestBase):
                 'message': f'student with ID {new_student_obj.student_id} is already enrolled in course with ID {new_course_obj.course_id}.'
             }
         }
+
+
+    def test_dropout_student_success(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student for dropout')
+            if not new_student_obj:
+                new_student_obj = Student(student_name='student for dropout')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_course_obj = self.fetch_if_exist(Course, course_name='course for dropout')
+            if not new_course_obj:
+                new_course_obj = Course(course_name='course for dropout')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_student_course_obj = self.fetch_if_exist(StudentCourse, student_id=new_student_obj.student_id, course_id=new_course_obj.course_id)
+            if not new_student_course_obj:
+                new_student_course_obj = StudentCourse(course_id=new_course_obj.course_id, student_id=new_student_obj.student_id)
+                session.add(new_student_course_obj)
+                session.commit()
+                session.refresh(new_student_course_obj)
+
+        payload = {
+            'student_id': new_student_obj.student_id,
+            'course_id': new_course_obj.course_id
+        }
+
+        response = self.client.request("DELETE", '/student/dropout', json=payload)
+
+        assert response.status_code == 200
+        assert self.fetch_if_exist(StudentCourse, student_course_id=new_student_course_obj.student_course_id) == None
+        assert response.json() == {
+            'student_course_id': new_student_course_obj.student_course_id,
+            'student_instance': {
+                'student_id': new_student_obj.student_id,
+                'student_name': new_student_obj.student_name
+            },
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            }
+        }
+
+    
