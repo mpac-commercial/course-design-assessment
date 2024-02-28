@@ -68,16 +68,19 @@ class TestCourse(TestBase):
 
 
     def test_create_duplicate_course(self):
-        new_obj = Course(course_name='test for duplicate')
-        self.delete_if_exist(table=Course, course_name=new_obj.course_name)
+        new_obj = self.fetch_if_exist(Course, course_name='test for duplicate course create')
         with LocalSession() as session:
-            session.add(new_obj)
-            session.commit()
-            session.refresh(new_obj)
-        
-        payload = {
-            'course_name': new_obj.course_name
-        }
+            if new_obj is None:
+                new_obj = Course(course_name='test for duplicate course create')
+                session.add(new_obj)
+                session.commit()
+                session.refresh(new_obj)
+
+            course_name_duplicate = new_obj.course_name
+
+            payload = {
+                'course_name': new_obj.course_name
+            }
 
         response = self.client.post('/course/create', json=payload)
 
@@ -85,7 +88,7 @@ class TestCourse(TestBase):
         assert response.json() == {
             'detail': {
           'description': 'cannot insert duplicate.',
-          'message': f'A course with {new_obj.course_name} name is available and cannot insert duplicate'
+          'message': f'A course with {course_name_duplicate} name is available and cannot insert duplicate'
         }
         }
 
@@ -452,7 +455,7 @@ class TestStudent(TestBase):
 
             new_student_obj = self.fetch_if_exist(Student, student_name='student enrollment already enrolled')
             if not new_student_obj:
-                new_student_obj = Student(Student, student_name='student enrollment already enrolled')
+                new_student_obj = Student(student_name='student enrollment already enrolled')
                 session.add(new_student_obj)
                 session.commit()
                 session.refresh(new_student_obj)
@@ -464,10 +467,10 @@ class TestStudent(TestBase):
                 session.commit()
 
             
-        payload = {
-            'student_id': new_student_obj.student_id,
-            'course_id': new_course_obj.course_id
-        }
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }
 
         response = self.client.post('/student/enroll', json=payload)
 
@@ -503,10 +506,10 @@ class TestStudent(TestBase):
                 session.commit()
                 session.refresh(new_student_course_obj)
 
-        payload = {
-            'student_id': new_student_obj.student_id,
-            'course_id': new_course_obj.course_id
-        }
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }
 
         response = self.client.request("DELETE", '/student/dropout', json=payload)
 
@@ -546,10 +549,10 @@ class TestStudent(TestBase):
                 session.commit()
                 session.refresh(new_course_obj)
             
-        payload = {
-            'student_id': new_student_obj.student_id,
-            'course_id': new_course_obj.course_id
-        }                
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }                
 
         response = self.client.request('DELETE', '/student/dropout', json=payload)
 
@@ -583,10 +586,10 @@ class TestStudent(TestBase):
                 session.delete(new_course_obj)
                 session.commit()
             
-        payload = {
-            'student_id': new_student_obj.student_id,
-            'course_id': new_course_obj.course_id
-        }
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }
 
         response = self.client.request('DELETE', '/student/dropout', json=payload)
 
@@ -1496,16 +1499,16 @@ class TestSubmission(TestBase):
 
         
 
-        response = self.client.request('GET', f'/submission/{new_course_obj.course_id}/top5/')    
+            response = self.client.request('GET', f'/submission/{new_course_obj.course_id}/top5/')    
 
-        assert response.status_code == 200
-        assert response.json() == {
-            'course_instance': {
-                'course_id': new_course_obj.course_id,
-                'course_name': new_course_obj.course_name
-            },
-            'students': top_5_students
-        }
+            assert response.status_code == 200
+            assert response.json() == {
+                'course_instance': {
+                    'course_id': new_course_obj.course_id,
+                    'course_name': new_course_obj.course_name
+                },
+                'students': top_5_students
+            }
         
 
     def test_top_5_student_course_not_found(self):
@@ -1549,10 +1552,10 @@ class TestSubmission(TestBase):
             for record in all_records:
                 session.delete(record)
             session.commit()
+            course_id = new_course_obj.course_id
 
             response = self.client.request('GET', f'/submission/{new_course_obj.course_id}/top5')
 
-        print(response.json())
         assert response.status_code == 404
         assert response.json() == {
             'detail': {
@@ -1560,7 +1563,3 @@ class TestSubmission(TestBase):
                 'message': f'no student grade were found for the course with ID {new_course_obj.course_id}'
             }
         }
-
-if __name__ == "__main__":
-    test = TestSubmission()
-    test.test_top_5_student()
