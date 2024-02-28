@@ -185,7 +185,7 @@ def create_submission(request: SubmissionCreate):
   if db_assignment is None:
     raise HTTPException(status_code=404, detail={
       'description': 'cannot create submission.',
-      'message': f'could not found assignment with ID {request.assignment_id}'
+      'message': f'could not find assignment with ID {request.assignment_id}'
     })
 
   # check if request course_id and assignment course_id match

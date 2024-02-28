@@ -714,3 +714,275 @@ class TestSubmission(TestBase):
             'grade': submission_obj.grade
         }
 
+
+    def test_submission_course_assignment_conflict(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course assignment conflict input')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course assignment conflict input')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_conflict_course_obj = self.fetch_if_exist(Course, course_name='course assignment conflict')
+            if new_conflict_course_obj is None:
+                new_conflict_course_obj = Course(course_name='course assignment conflict')
+                session.add(new_conflict_course_obj)
+                session.commit()
+                session.refresh(new_conflict_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, assignment_name='assignment with conflict', course_id=new_conflict_course_obj.course_id)
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_conflict_course_obj.course_id, assignment_name='assignment with conflict')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='submission student conflict')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='submission student conflict')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id,
+                'grade': 80
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+        print(response.json())
+
+        assert response.status_code == 409
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission.',
+                'message': f'course ID with ID {new_course_obj.course_id} is not matched with assignment\'s course ID {new_assignment_obj.course_id}.'
+            }
+        }
+
+    
+    def test_submission_student_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission student not found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission student not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, assignment_name='assignment submission student not found', course_id=new_course_obj.course_id)
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(assignment_name='assignment submission student not found', course_id=new_course_obj.course_id)
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission student not found')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student submission student not found')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+                session.delete(new_student_obj)
+                session.commit()
+            else:
+                session.delete(new_student_obj)
+                session.commit()
+            
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id,
+                'grade': 80
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission',
+                'message': f'could not find student with ID {new_student_obj.student_id}'
+            }
+        }
+
+
+    def test_submission_course_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission course not found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission course not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+                session.delete(new_course_obj)
+                session.commit()
+            else:
+                session.delete(new_course_obj)
+                session.commit()
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission course not found')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student submission course not found')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+            
+            new_assignment_obj = self.fetch_if_exist(Assignment, assignment_name='assignment submission course not found')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=2, assignment_name='assignment submission course not found')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id,
+                'grade': 80
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission.',
+                'message': f'could not find course with ID {new_course_obj.course_id}'
+            }
+        }
+
+
+    def test_submission_assignment_not_found(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission assignment not found')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student submission assignment not found')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission assignment not found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission assignment not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='assignment submission assignment not found')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='assignment submission assignment not found')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+                session.delete(new_assignment_obj)
+                session.commit()
+            else:
+                session.delete(new_assignment_obj)
+                session.commit()
+
+            payload = {
+                'assignment_id': new_assignment_obj.assignment_id,
+                'course_id': new_course_obj.course_id,
+                'student_id': new_student_obj.student_id,
+                'grade': 80
+            }
+        
+        response = self.client.post('/submission/create', json=payload)
+        
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission.',
+                'message': f'could not find assignment with ID {new_assignment_obj.assignment_id}'
+            }
+        }
+
+
+    def test_submission_grade_gt_100(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission grade not in range')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='stdent submission grade not in range')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission grade not in range')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission grade not in range')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, assignment_name='assignment submission grade not in range', course_id=new_course_obj.course_id)
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(assignment_name='assignment submission grade not in range', course_id=new_course_obj.course_id)
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id,
+                'grade': 110
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+
+        assert response.status_code == 422
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission',
+                'message': 'grade out of range. grade should be between 0 and 100.'
+            }
+        }
+
+
+    def test_submission_grade_le_0(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission grade not in range')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission grade not in range')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission grade not in range')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student submission grade not in range')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='assignment submission grade not in range')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='assignment submission grade not in range')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+            
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id,
+                'grade': -10
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+        
+        assert response.status_code == 422
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission',
+                'message': 'grade out of range. grade should be between 0 and 100.'
+            }
+        }
+
+    # def test_submission_duplicate(self):
+    #     with LocalSession() as session:
+
