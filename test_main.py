@@ -219,6 +219,29 @@ class TestAssignment(TestBase):
         }
 
 
+    def test_create_assignment_course_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = Course(course_name='assignemnt course to be deleted')
+            session.add(new_course_obj)
+            session.commit()
+            session.refresh(new_course_obj)
+            session.delete(new_course_obj)
+            session.commit()
+
+        payload = {
+            'course_id': new_course_obj.course_id,
+            'assignment_name': 'assignment for course not found error'
+        }
+
+        respone = self.client.post('/assignment/create', json=payload)
+
+        assert respone.status_code == 404
+        assert respone.json() == {
+            'detail': {
+      'desccription': 'cannot create assignment.',
+      'message': f'Course not found with ID {new_course_obj.course_id}'
+    }
+        }
 
 
 
