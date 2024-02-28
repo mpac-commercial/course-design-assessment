@@ -186,37 +186,37 @@ class TestCourse(TestBase):
 
 
 
-# class TestAssignment(TestBase):
-#     def test_create_assignment(self):
-#         self.delete_if_exist(table=Assignment, assignment_name='test for create')
-#         with LocalSession() as session:
-#             new_course_obj = Course(course_name='test course for assignment')
-#             self.delete_if_exist(table=Course, course_name=new_course_obj.course_name)
-#             session.add(new_course_obj)
-#             session.commit()
-#             session.refresh(new_course_obj)
-#         payload = {'assignment_name': 'test for create', 'course_id': new_course_obj.course_id}
+class TestAssignment(TestBase):
+    def test_create_assignment(self):
+        self.delete_if_exist(table=Assignment, assignment_name='test for create')
+        with LocalSession() as session:
+            new_course_obj = Course(course_name='test course for assignment')
+            self.delete_if_exist(table=Course, course_name=new_course_obj.course_name)
+            session.add(new_course_obj)
+            session.commit()
+            session.refresh(new_course_obj)
+        payload = {'assignment_name': 'test for create', 'course_id': new_course_obj.course_id}
 
-#         with LocalSession() as session:
-#             new_assignment_obj = Assignment(assignment_name=payload['assignment_name'],
-#                                              course_id=new_course_obj.course_id)
-#             session.add(new_assignment_obj)
-#             session.commit()
-#             session.refresh(new_assignment_obj)
-#             session.delete(new_assignment_obj)
-#             session.commit()
+        with LocalSession() as session:
+            new_assignment_obj = Assignment(assignment_name=payload['assignment_name'],
+                                             course_id=new_course_obj.course_id)
+            session.add(new_assignment_obj)
+            session.commit()
+            session.refresh(new_assignment_obj)
+            session.delete(new_assignment_obj)
+            session.commit()
 
-#         response = self.client.post('/assignment/create', json=payload)
+        response = self.client.post('/assignment/create', json=payload)
 
-#         assert response.status_code == 200
-#         assert response.json() == {
-#             'assignment_id': new_assignment_obj.assignment_id+1,
-#             'assignment_name': new_assignment_obj.assignment_name,
-#             'course_instance': {
-#                 'course_id': new_course_obj.course_id,
-#                 'course_name': new_course_obj.course_name
-#             }
-#         }
+        assert response.status_code == 200
+        assert response.json() == {
+            'assignment_id': new_assignment_obj.assignment_id+1,
+            'assignment_name': new_assignment_obj.assignment_name,
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            }
+        }
 
 
 
