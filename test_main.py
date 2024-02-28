@@ -635,6 +635,82 @@ class TestStudent(TestBase):
         }
 
 
-if __name__ == "__main__":
-    t = TestStudent()
-    t.test_student_dopoout_not_enrolled()
+
+class TestSubmission(TestBase):
+    def test_create_submission(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(table=Course, course_name='course for submission')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course for submission')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            
+            new_student_obj = self.fetch_if_exist(table=Student, student_name='student for submission')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student for submission')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_assignment_obj = self.fetch_if_exist(table=Assignment, assignment_name='assignment for submission', course_id=new_course_obj.course_id)
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(assignment_name='assignment for submission', course_id=new_course_obj.course_id)
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            submission_obj = self.fetch_if_exist(
+                table=Submission,
+                assignment_id=new_assignment_obj.assignment_id,
+                course_id=new_course_obj.course_id,
+                student_id=new_student_obj.student_id
+            )
+            if submission_obj is not None:
+                session.delete(submission_obj)
+                session.commit()
+            
+            submission_obj = Submission(
+                assignment_id=new_assignment_obj.assignment_id,
+                course_id=new_course_obj.course_id,
+                student_id=new_student_obj.student_id,
+                grade=80
+            )
+            session.add(submission_obj)
+            session.commit()
+            session.refresh(submission_obj)
+            session.delete(submission_obj)
+            session.commit()
+
+            payload = {
+                'assignment_id': new_assignment_obj.assignment_id,
+                'course_id': new_course_obj.course_id,
+                'student_id': new_student_obj.student_id,
+                'grade': submission_obj.grade
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+
+        assert response.status_code == 200
+        assert self.fetch_if_exist(Assignment, course_id=new_assignment_obj.course_id, assignment_name=new_assignment_obj.assignment_name).course_id == new_course_obj.course_id
+        assert response.json() == {
+            'submission_id': submission_obj.submission_id+1,
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            },
+            'student_instance': {
+                'student_name': new_student_obj.student_name,
+                'student_id': new_student_obj.student_id
+            },
+            'assignment_instance': {
+                'assignment_id': new_assignment_obj.assignment_id,
+                'assignment_name': new_assignment_obj.assignment_name,
+                'course_instance': {
+                    'course_id': new_course_obj.course_id,
+                    'course_name': new_course_obj.course_name
+                },
+            },
+            'grade': submission_obj.grade
+        }
+
