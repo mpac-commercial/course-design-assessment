@@ -1508,6 +1508,59 @@ class TestSubmission(TestBase):
         }
         
 
+    def test_top_5_student_course_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='top 5 students course not found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='top 5 students course not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+                session.delete(new_course_obj)
+                session.commit()
+            else:
+                session.delete(new_course_obj)
+                session.commit()
+        
+        response = self.client.request('GET', f'submission/{new_course_obj.course_id}/top5')
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'request cannot be made',
+                'message': f'could not find course with ID {new_course_obj.course_id}'
+            }
+        }
+
+    
+    def test_top_5_student_no_record_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course top5 no record')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course top5 no record')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            
+            all_records = session.query(Submission)\
+                .filter_by(course_id=new_course_obj.course_id)\
+                .all()
+            
+            for record in all_records:
+                session.delete(record)
+            session.commit()
+
+            response = self.client.request('GET', f'/submission/{new_course_obj.course_id}/top5')
+
+        print(response.json())
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'request cannot be made',
+                'message': f'no student grade were found for the course with ID {new_course_obj.course_id}'
+            }
+        }
+
 if __name__ == "__main__":
     test = TestSubmission()
     test.test_top_5_student()
