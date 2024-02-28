@@ -562,6 +562,79 @@ class TestStudent(TestBase):
         }
 
 
-    # def test_dropout_course_not_found(self):
-    #     with LocalSession() as session:
-    #         new_student_obj = self.fetch_if_exist(Student, )
+    def test_dropout_course_not_found(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student dropout course not found')
+            if not new_student_obj:
+                new_student_obj = Student(student_name='student dropout course not found')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            new_course_obj = self.fetch_if_exist(Course, course_name='course dropout course not found')
+            if new_course_obj:
+                session.delete(new_course_obj)
+                session.commit()
+            else:
+                new_course_obj = Course(course_name='course dropout course not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+                session.delete(new_course_obj)
+                session.commit()
+            
+        payload = {
+            'student_id': new_student_obj.student_id,
+            'course_id': new_course_obj.course_id
+        }
+
+        response = self.client.request('DELETE', '/student/dropout', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot dropout student.',
+                'message': f'course with ID {new_course_obj.course_id} was not found!'
+            }
+        }
+
+    
+    def test_student_dopoout_not_enrolled(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(table=Student, student_name='student dropout not enrolled')
+            print(new_student_obj)
+            if new_student_obj is None:
+                print('ok')
+                new_student_obj = Student(student_name='student dropout not enrolled')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+            # print(new_student_obj.student_name)
+            
+            new_course_obj = self.fetch_if_exist(table=Course, course_name='course dropout not enrolled')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course dropout not enrolled')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            # print(new_course_obj.course_name)
+            
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }
+
+        response = self.client.request('DELETE', '/student/dropout', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot dropout student.',
+                'message': f'student with ID {new_student_obj.student_id} is not enrolled in course with ID {new_course_obj.course_id}!'
+            }
+        }
+
+
+if __name__ == "__main__":
+    t = TestStudent()
+    t.test_student_dopoout_not_enrolled()
