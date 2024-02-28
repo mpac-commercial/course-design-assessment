@@ -113,24 +113,6 @@ class CourseServiceImpl(CourseService, CourseServiceMixin):
 
   def enroll_student(self, course_id, student_id) -> StudentCourse:
     with LocalSession() as session:
-      # check for student existance with ID
-      if not session.query(Student)\
-      .filter_by(student_id=student_id)\
-      .first():
-        raise HTTPException(status_code=404, detail={
-          'description': 'cannot enroll student.',
-          'message': f'student with ID {student_id} was not found!'
-        })
-      
-      # check for course existance with ID
-      if not  session.query(Course)\
-      .filter_by(course_id=course_id)\
-      .first():
-        raise HTTPException(status_code=404, detail={
-          'description': 'cannot enroll student.',
-          'message': f'course with ID {course_id} was not found!'
-        })
-
       db_student_course = StudentCourse(student_id=student_id, course_id=course_id)
       # check for duplicate student and course enrollment
       if session.query(StudentCourse)\
