@@ -439,3 +439,41 @@ class TestStudent(TestBase):
                 'message': f'could not find course with ID {new_course_obj.course_id}'
             }
         }        
+
+    def test_student_enrollment_already_enrolled(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course enrollment already enrolled')
+            if not new_course_obj:
+                new_course_obj = Course(course_name='course enrollment already enrolled')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='student enrollment already enrolled')
+            if not new_student_obj:
+                new_student_obj = Student(Student, student_name='student enrollment already enrolled')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            student_course_new_obj = self.fetch_if_exist(StudentCourse, course_id=new_course_obj.course_id, student_id=new_student_obj.student_id)
+            if not student_course_new_obj:
+                student_course_new_obj = StudentCourse(student_id=new_student_obj.student_id, course_id=new_course_obj.course_id)
+                session.add(student_course_new_obj)
+                session.commit()
+
+            
+        payload = {
+            'student_id': new_student_obj.student_id,
+            'course_id': new_course_obj.course_id
+        }
+
+        response = self.client.post('/student/enroll', json=payload)
+
+        assert response.status_code == 409
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot enroll student.',
+                'message': f'student with ID {new_student_obj.student_id} is already enrolled in course with ID {new_course_obj.course_id}.'
+            }
+        }
