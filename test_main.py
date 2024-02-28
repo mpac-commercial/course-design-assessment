@@ -1362,3 +1362,39 @@ class TestSubmission(TestBase):
         }
 
 
+    def test_average_assignment_no_record_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course average assignment no record found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course average assignment no record found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='assignment average assignment no record found')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='assignment average assignment no record found')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            all_records = session.query(Submission).filter_by(assignment_id=new_assignment_obj.assignment_id, course_id=new_course_obj.course_id).all()
+            for record in all_records:
+                session.delete(record)
+            session.commit()
+
+            payload = {
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id
+            }
+            
+        response = self.client.request('GET', '/submission/average-course-assignment', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+
+                'detail': {
+                'description':'request cannot be made',
+                'message': f'could not find any grade for course with ID {new_course_obj.course_id} and assignment with ID {new_assignment_obj.assignment_id}'
+                }
+        }
