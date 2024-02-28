@@ -104,7 +104,7 @@ def enroll_student(request: StudentCourseCreate):
     )
 
   # fetch course from database
-  db_course = course_service.get_course_by_id(db_student_course.course_id)
+  db_course = course_service.get_course_by_id(request.course_id)
   # check if course exists
   if db_course is None:
     raise HTTPException(status_code=404, detail={

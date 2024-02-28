@@ -23,6 +23,13 @@ class TestBase:
         return None
         
 
+    def fetch_if_exist(self, table, **kwargs):
+        with LocalSession() as session:
+            return session.query(table)\
+            .filter_by(**kwargs)\
+            .first()
+
+
     def fetch_last_value(self, table_name, table_id):
         with LocalSession() as session:
             session.execute(text(
@@ -306,8 +313,53 @@ class TestAssignment(TestBase):
         }
         }
 
-        
+    
 
+class TestStudent(TestBase):
+    def test_enroll_student(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(table=Course, course_name='course for student enrollment')
+            if not new_course_obj:
+                new_course_obj = Course(course_name='course for student enrollment')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student for enrollment')
+            if not new_student_obj:
+                new_student_obj = Student(student_name='student for enrollment')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+        payload = {
+            'student_id': new_student_obj.student_id,
+            'course_id': new_course_obj.course_id
+        }
+
+        with LocalSession() as session:
+            new_student_course_obj = StudentCourse(course_id=new_course_obj.course_id, student_id=new_student_obj.student_id)
+            self.delete_if_exist(StudentCourse, student_id=new_student_obj.student_id, course_id=new_course_obj.course_id)
+            session.add(new_student_course_obj)
+            session.commit()
+            session.refresh(new_student_course_obj)
+        self.delete_if_exist(StudentCourse, student_id=new_student_obj.student_id, course_id=new_course_obj.course_id)
+
+        response = self.client.post('/student/enroll', json=payload)
+
+        assert response.status_code == 200
+        assert response.json() == {
+            'student_course_id': new_student_course_obj.student_course_id+1,
+            'student_instance': {
+                'student_id': new_student_obj.student_id,
+                'student_name': new_student_obj.student_name
+            },
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            }
+        }
 
 
 
