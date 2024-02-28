@@ -1109,4 +1109,40 @@ class TestSubmission(TestBase):
         }
 
 
-    def test_average_assignment
+    def test_average_student_course_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(table=Course, course_name='course to be deleted student average')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course to be deleted student average')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+                session.delete(new_course_obj)
+                session.commit()
+            else:
+                session.delete(new_course_obj)
+                session.commit()
+
+
+            payload = {
+                'course_id': new_course_obj.course_id,
+                'assignment_id': 1,
+                'student_id': 1,
+                'grade': 100
+            }
+
+        response= self.client.request('GET', '/submission/average-course-student', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'request cannot be made.',
+                'message': f'no course was found with ID {new_course_obj.course_id}'
+            }
+        }
+
+
+    def test_average_student_student_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course for student average student not found')
+            # if n
