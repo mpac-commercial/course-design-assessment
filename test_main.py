@@ -983,6 +983,51 @@ class TestSubmission(TestBase):
             }
         }
 
-    # def test_submission_duplicate(self):
-    #     with LocalSession() as session:
+    def test_submission_duplicate(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(Student, student_name='student submission duplicate')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student submission duplicate')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
 
+            new_course_obj = self.fetch_if_exist(Course, course_name='course submission duplicate')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course submission duplicate')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='assignment submission duplicate')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='assignment submission duplicate')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            new_submission_obj = self.fetch_if_exist(Submission, course_id=new_course_obj.course_id, assignment_id=new_assignment_obj.assignment_id, student_id=new_student_obj.student_id)
+            if new_submission_obj is None:
+                new_submission_obj = Submission(course_id=new_course_obj.course_id, assignment_id=new_assignment_obj.assignment_id, student_id=new_student_obj.student_id, grade=70)
+                session.add(new_submission_obj)
+                session.commit()
+                session.refresh(new_submission_obj)
+
+            payload = {
+                'assignment_id': new_assignment_obj.assignment_id,
+                'course_id': new_course_obj.course_id,
+                'student_id': new_student_obj.student_id,
+                'grade': 40
+            }
+
+        response = self.client.post('/submission/create', json=payload)
+
+        assert response.status_code == 409
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot create submission.',
+          'message': f'dupliacate values not allowed! record is available for course with ID {new_course_obj.course_id}, assignment with ID {new_assignment_obj.assignment_id}, and student with ID {new_student_obj.student_id}.'
+            }
+        }
+
+        \
