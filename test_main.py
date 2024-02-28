@@ -165,6 +165,7 @@ class TestCourse(TestBase):
         response = self.client.delete(f'/course/delete/{new_obj.course_id}')
 
         assert response.status_code == 200
+        assert self.fetch_if_exist(Course, course_id=new_obj.course_id) == None
         assert response.json() == {
             'course_id': new_obj.course_id,
             'course_name': new_obj.course_name
@@ -524,3 +525,43 @@ class TestStudent(TestBase):
         }
 
     
+    def test_dropout_student_not_found(self):
+        with LocalSession() as session:
+            new_student_obj = self.fetch_if_exist(table=Student, student_name='student dropout student not found')
+            if new_student_obj:
+                session.delete(new_student_obj)
+                session.commit()
+            else:
+                new_student_obj = Student(student_name='student dropout student not found')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+                session.delete(new_student_obj)
+                session.commit()
+            
+            new_course_obj = self.fetch_if_exist(Course, course_name='course dropout student not found')
+            if not new_course_obj:
+                new_course_obj = Course(course_name='course dropout student not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            
+        payload = {
+            'student_id': new_student_obj.student_id,
+            'course_id': new_course_obj.course_id
+        }                
+
+        response = self.client.request('DELETE', '/student/dropout', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'cannot dropout student.',
+                'message': f'student with ID {new_student_obj.student_id} was not found!'
+            }
+        }
+
+
+    # def test_dropout_course_not_found(self):
+    #     with LocalSession() as session:
+    #         new_student_obj = self.fetch_if_exist(Student, )
