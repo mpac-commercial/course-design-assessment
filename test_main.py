@@ -1437,3 +1437,77 @@ class TestSubmission(TestBase):
                 'message': f'course with ID {new_course_obj.course_id} does not match the assignment\'s course with ID {new_assignment_obj.course_id}'
             }
         }
+
+    
+    def test_top_5_student(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course top5 student')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course top5 student')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            
+            student_list = list()
+            for idx in range(1, 11):
+                student_instance = self.fetch_if_exist(Student, student_name=f'top 5 student student {idx}')
+                if student_instance is None:
+                    student_instance = Student(student_name=f'top 5 student student {idx}')
+                student_list.append(student_instance)
+
+            session.add_all(student_list)
+            session.commit()
+            for idx in range(10):
+                session.refresh(student_list[idx])
+            
+            
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='top 5 student assignment')
+            if new_assignment_obj is None:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='top 5 student assignment')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+
+            submission_list = list()
+            for idx in range(1, 11):
+                submission_instance = self.fetch_if_exist(
+                    Submission,
+                    course_id=new_course_obj.course_id,
+                    student_id=student_list[idx-1].student_id,
+                    assignment_id=new_assignment_obj.assignment_id,
+                    grade=idx*5+35
+                )
+                if submission_instance is None:
+                    submission_instance = Submission(
+                        course_id=new_course_obj.course_id,
+                        student_id=student_list[idx-1].student_id,
+                        assignment_id=new_assignment_obj.assignment_id,
+                        grade=idx*5+35
+                        )
+                submission_list.append(submission_instance)
+            
+            session.add_all(submission_list)
+            session.commit()
+            for idx in range(len(submission_list)):
+                session.refresh(submission_list[idx])
+            
+
+            top_5_students = [submission.student_id for submission in sorted(submission_list, key=lambda instance: instance.grade, reverse=True)[:5]]
+
+        
+
+        response = self.client.request('GET', f'/submission/{new_course_obj.course_id}/top5/')    
+
+        assert response.status_code == 200
+        assert response.json() == {
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            },
+            'students': top_5_students
+        }
+        
+
+if __name__ == "__main__":
+    test = TestSubmission()
+    test.test_top_5_student()
