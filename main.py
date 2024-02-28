@@ -232,7 +232,7 @@ def get_average_course_student(request: StudentCourseCreate):
   #create course schema from database
   course_instance = CourseView.model_validate(db_course)
 
-  db_student = course_service.get_student_by_id(request.course_id)
+  db_student = course_service.get_student_by_id(request.student_id)
   # check if student exists
   if db_student is None:
     raise HTTPException(status_code=404, detail={

@@ -1030,4 +1030,83 @@ class TestSubmission(TestBase):
             }
         }
 
-        \
+    def test_average_student(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course average student')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course average student')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+            
+            new_student_obj = self.fetch_if_exist(Student, student_name='student average student')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student average student')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            assignment_list = list()
+            for idx in range(1, 6):
+                new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name=f'assignment {idx} average student')
+                if new_assignment_obj:
+                    assignment_list.append(new_assignment_obj)
+                else:
+                    assignment_list.append(Assignment(course_id=new_course_obj.course_id, assignment_name=f'assignment {idx} average student'))
+                    session.add_all(assignment_list)
+                    session.commit()
+                    for i in range(len(assignment_list)):
+                        session.refresh(assignment_list[i])
+                
+            submission_list = list()
+            for idx in range(1, 6):
+                new_submission_obj = self.fetch_if_exist(
+                    Submission,
+                    course_id=new_course_obj.course_id,
+                    student_id=new_student_obj.student_id,
+                    assignment_id=assignment_list[idx-1].assignment_id
+                )
+                if new_submission_obj:
+                    submission_list.append(new_submission_obj)
+                else:
+                    submission_list.append(Submission(
+                        student_id=new_student_obj.student_id,
+                        course_id=new_course_obj.course_id,
+                        assignment_id=assignment_list[idx-1].assignment_id,
+                        grade=10*idx + 35
+                    ))
+
+            session.add_all(submission_list)
+            session.commit()
+            for i in range(len(submission_list)):
+                session.refresh(submission_list[i])
+
+            payload = {
+                'course_id': new_course_obj.course_id,
+                'student_id': new_student_obj.student_id,
+            }
+
+            avg_grade = session.query(func.round(func.avg(Submission.grade)))\
+                .filter_by(course_id=new_course_obj.course_id, student_id=new_student_obj.student_id)\
+                .scalar()
+        
+        print(avg_grade)
+
+        response = self.client.request('GET', '/submission/average-course-student', json=payload)
+
+        assert response.status_code == 200
+        assert round(sum([10*idx +35 for idx in range(1,6)])/5) == avg_grade
+        assert response.json() == {
+            'student_instance': {
+                'student_id': new_student_obj.student_id,
+                'student_name': new_student_obj.student_name
+            },
+            'course_instance': {
+                'course_id': new_course_obj.course_id,
+                'course_name': new_course_obj.course_name
+            },
+            'grade': avg_grade
+        }
+
+
+    def test_average_assignment
