@@ -1324,4 +1324,41 @@ class TestSubmission(TestBase):
             }
         }
 
+    
+    def test_average_assignment_assignment_not_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course average assignment assignment not found')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course average assignment assignment not found')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_assignment_obj = self.fetch_if_exist(Assignment, course_id=new_course_obj.course_id, assignment_name='assignment average assignment not found')
+            if new_assignment_obj:
+                session.delete(new_assignment_obj)
+                session.commit()
+            else:
+                new_assignment_obj = Assignment(course_id=new_course_obj.course_id, assignment_name='assignment average assignment not found')
+                session.add(new_assignment_obj)
+                session.commit()
+                session.refresh(new_assignment_obj)
+                session.delete(new_assignment_obj)
+                session.commit()
+
+            payload = {
+                'course_id': new_course_obj.course_id,
+                'assignment_id': new_assignment_obj.assignment_id
+            }
+        
+        response = self.client.request('GET', '/submission/average-course-assignment', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'request could not be made',
+                'message': f'could not find assignment with ID {new_assignment_obj.assignment_id}'
+            }
+        }
+
 
