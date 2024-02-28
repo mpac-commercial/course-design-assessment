@@ -1176,3 +1176,43 @@ class TestSubmission(TestBase):
                 'message': f'no student was found with ID {new_student_obj.student_id}'
             }
         }
+
+    
+    def test_average_student_no_record_found(self):
+        with LocalSession() as session:
+            new_course_obj = self.fetch_if_exist(Course, course_name='course without student submission')
+            if new_course_obj is None:
+                new_course_obj = Course(course_name='course without student submission')
+                session.add(new_course_obj)
+                session.commit()
+                session.refresh(new_course_obj)
+
+            new_student_obj = self.fetch_if_exist(Student, student_name='student without course submission record')
+            if new_student_obj is None:
+                new_student_obj = Student(student_name='student without course submission record')
+                session.add(new_student_obj)
+                session.commit()
+                session.refresh(new_student_obj)
+
+            all_records = session.query(Submission)\
+                .filter_by(course_id=new_course_obj.course_id, student_id=new_student_obj.student_id)\
+                .all()
+            
+            for record in all_records:
+                session.delete(record)
+            session.commit()
+
+            payload = {
+                'student_id': new_student_obj.student_id,
+                'course_id': new_course_obj.course_id
+            }
+
+        response = self.client.request('GET', '/submission/average-course-student', json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            'detail': {
+                'description': 'request cannot be made',
+                'message': f'could not find any grade for course with ID {new_course_obj.course_id} and student with ID {new_student_obj.student_id}'
+            }
+        }
